@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Spam Detector</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        /* HEADER */
+
+        .topbar {
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 18px 6%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: #4f46e5;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .brand h1 {
+            font-size: 21px;
+        }
+
+        .brand span {
+            display: block;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .status {
+            background: #ecfdf5;
+            color: #047857;
+            padding: 8px 13px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* PAGE */
+
+        .container {
+            width: 90%;
+            max-width: 1100px;
+            margin: 35px auto;
+        }
+
+        .welcome {
+            margin-bottom: 25px;
+        }
+
+        .welcome h2 {
+            font-size: 30px;
+            margin-bottom: 7px;
+        }
+
+        .welcome p {
+            color: #6b7280;
+        }
+
+        /* STAT CARDS */
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 16px;
+            padding: 22px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .blue {
+            background: #eef2ff;
+        }
+
+        .red {
+            background: #fef2f2;
+        }
+
+        .green {
+            background: #ecfdf5;
+        }
+
+        .stat-card h3 {
+            font-size: 25px;
+            margin-bottom: 3px;
+        }
+
+        .stat-card p {
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        /* MAIN GRID */
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 22px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 18px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+        }
+
+        .card-title {
+            font-size: 20px;
+            margin-bottom: 6px;
+        }
+
+        .card-subtitle {
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        /* TEXTAREA */
+
+        textarea {
+            width: 100%;
+            min-height: 190px;
+            padding: 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            resize: vertical;
+            font-size: 15px;
+            outline: none;
+            line-height: 1.5;
+        }
+
+        textarea:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+        }
+
+        /* BUTTONS */
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .check-btn {
+            flex: 1;
+            background: #4f46e5;
+            color: white;
+        }
+
+        .check-btn:hover {
+            background: #4338ca;
+        }
+
+        .clear-btn {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .clear-btn:hover {
+            background: #e5e7eb;
+        }
+
+        /* RESULT */
+
+        #result {
+            display: none;
+            margin-top: 18px;
+            padding: 18px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .spam {
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        .ham {
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+
+        .error {
+            background: #fffbeb;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+
+        .result-title {
+            font-size: 25px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        /* HISTORY */
+
+        .history-list {
+            max-height: 390px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            padding: 14px;
+            background: #f9fafb;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #9ca3af;
+        }
+
+        .spam-item {
+            border-left-color: #dc2626;
+        }
+
+        .ham-item {
+            border-left-color: #059669;
+        }
+
+        .history-message {
+            font-size: 14px;
+            line-height: 1.45;
+            margin-bottom: 7px;
+        }
+
+        .history-info {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .empty {
+            text-align: center;
+            color: #9ca3af;
+            padding: 35px 10px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .history-header h3 {
+            font-size: 18px;
+        }
+
+        .small-clear {
+            padding: 8px 11px;
+            font-size: 12px;
+        }
+
+        /* FOOTER */
+
+        footer {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 12px;
+            margin-top: 30px;
+            padding-bottom: 25px;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 800px) {
+
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar {
+                padding: 15px 5%;
+            }
+
+            .status {
+                display: none;
+            }
+
+            .welcome h2 {
+                font-size: 25px;
+            }
+        }
+
+        @media (max-width: 500px) {
+
+            .container {
+                width: 94%;
+                margin-top: 25px;
+            }
+
+            .card {
+                padding: 18px;
+            }
+
+            .button-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- TOP BAR -->
+
+    <header class="topbar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                🤖
+            </div>
+
+            <div>
+                <h1>AI Spam Detector</h1>
+                <span>Email & SMS Security System</span>
+            </div>
+
+        </div>
+
+        <div class="status">
+            ● AI System Online
+        </div>
+
+    </header>
+
+
+    <main class="container">
+
+        <!-- WELCOME -->
+
+        <section class="welcome">
+
+            <h2>Spam Detection Dashboard</h2>
+
+            <p>
+                Analyze suspicious emails and SMS messages using
+                machine learning.
+            </p>
+
+        </section>
+
+
+        <!-- STATISTICS -->
+
+        <section class="dashboard">
+
+            <div class="stat-card">
+
+                <div class="stat-icon blue">
+                    📊
+                </div>
+
+                <div>
+                    <h3 id="totalCount">0</h3>
+                    <p>Total Checked</p>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon red">
+                    🚨
+                </div>
+
+                <div>
+                    <h3 id="spamCount">0</h3>
+                    <p>Spam Detected</p>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon green">
+                    🛡️
+                </div>
+
+                <div>
+                    <h3 id="safeCount">0</h3>
+                    <p>Safe Messages</p>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- MAIN CONTENT -->
+
+        <section class="main-grid">
+
+
+            <!-- DETECTOR -->
+
+            <div class="card">
+
+                <h2 class="card-title">
+                    Analyze Message
+                </h2>
+
+                <p class="card-subtitle">
+                    Paste an email or SMS below and let the AI
+                    classify it.
+                </p>
+
+
+                <textarea
+                    id="message"
+                    placeholder="Example: Congratulations! You have won a prize..."
+                ></textarea>
+
+
+                <div class="button-row">
+
+                    <button
+                        class="check-btn"
+                        onclick="checkSpam()"
+                    >
+                        🔍 Analyze Message
+                    </button>
+
+                    <button
+                        class="clear-btn"
+                        onclick="clearMessage()"
+                    >
+                        Clear
+                    </button>
+
+                </div>
+
+
+                <div id="result"></div>
+
+            </div>
+
+
+            <!-- HISTORY -->
+
+            <div class="card">
+
+                <div class="history-header">
+
+                    <h3>
+                        Recent Predictions
+                    </h3>
+
+                    <button
+                        class="clear-btn small-clear"
+                        onclick="clearHistory()"
+                    >
+                        Clear
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="historyList"
+                    class="history-list"
+                >
+                    <div class="empty">
+                        No predictions yet.
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <footer>
+        AI Based Spam Email/SMS Detector • Machine Learning Project
+    </footer>
+
+
+    <script>
+
+        async function checkSpam() {
+
+            const message =
+                document.getElementById("message").value.trim();
+
+            const result =
+                document.getElementById("result");
+
+
+            if (!message) {
+
+                result.style.display = "block";
+                result.className = "error";
+
+                result.innerHTML = `
+                    <div class="result-title">
+                        ⚠️ Message Required
+                    </div>
+
+                    <div>
+                        Please enter an email or SMS message.
+                    </div>
+                `;
+
+                return;
+            }
+
+
+            result.style.display = "block";
+            result.className = "";
+            result.innerHTML =
+                "🔄 AI is analyzing your message...";
+
+
+            try {
+
+                const response = await fetch("/predict", {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        message: message
+                    })
+
+                });
+
+
+                const data = await response.json();
+
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.error || "Prediction failed"
+                    );
+                }
+
+
+                if (data.prediction === "spam") {
+
+                    result.className = "spam";
+
+                    result.innerHTML = `
+                        <div class="result-title">
+                            🚨 SPAM DETECTED
+                        </div>
+
+                        <div>
+                            AI Confidence: <strong>
+                            ${data.confidence}%
+                            </strong>
+                        </div>
+                    `;
+
+                } else {
+
+                    result.className = "ham";
+
+                    result.innerHTML = `
+                        <div class="result-title">
+                            ✅ SAFE MESSAGE
+                        </div>
+
+                        <div>
+                            AI Confidence: <strong>
+                            ${data.confidence}%
+                            </strong>
+                        </div>
+                    `;
+                }
+
+
+                loadStats();
+                loadHistory();
+
+            } catch (error) {
+
+                result.className = "error";
+
+                result.innerHTML = `
+                    <div class="result-title">
+                        ❌ Error
+                    </div>
+
+                    <div>
+                        ${escapeHtml(error.message)}
+                    </div>
+                `;
+            }
+        }
+
+
+        async function loadStats() {
+
+            try {
+
+                const response =
+                    await fetch("/stats");
+
+                const data =
+                    await response.json();
+
+
+                document.getElementById("totalCount")
+                    .textContent = data.total;
+
+                document.getElementById("spamCount")
+                    .textContent = data.spam;
+
+                document.getElementById("safeCount")
+                    .textContent = data.safe;
+
+            } catch (error) {
+
+                console.log(error);
+
+            }
+        }
+
+
+        async function loadHistory() {
+
+            try {
+
+                const response =
+                    await fetch("/history");
+
+                const data =
+                    await response.json();
+
+
+                const historyList =
+                    document.getElementById("historyList");
+
+
+                if (data.length === 0) {
+
+                    historyList.innerHTML = `
+                        <div class="empty">
+                            No predictions yet.
+                        </div>
+                    `;
+
+                    return;
+                }
+
+
+                historyList.innerHTML = "";
+
+
+                data.forEach(item => {
+
+                    const div =
+                        document.createElement("div");
+
+
+                    const isSpam =
+                        item.prediction === "spam";
+
+
+                    div.className =
+                        "history-item " +
+                        (isSpam
+                            ? "spam-item"
+                            : "ham-item");
+
+
+                    const icon =
+                        isSpam ? "🚨" : "✅";
+
+
+                    const label =
+                        isSpam
+                            ? "SPAM"
+                            : "SAFE";
+
+
+                    div.innerHTML = `
+                        <div class="history-message">
+                            ${icon}
+                            <strong>${label}</strong>
+                            — ${escapeHtml(item.message)}
+                        </div>
+
+                        <div class="history-info">
+                            Confidence:
+                            ${item.confidence}%
+                        </div>
+                    `;
+
+
+                    historyList.appendChild(div);
+
+                });
+
+            } catch (error) {
+
+                console.log(error);
+
+            }
+        }
+
+
+        function clearMessage() {
+
+            document.getElementById("message")
+                .value = "";
+
+            document.getElementById("result")
+                .style.display = "none";
+        }
+
+
+        async function clearHistory() {
+
+            try {
+
+                await fetch("/clear-history", {
+                    method: "DELETE"
+                });
+
+                loadStats();
+                loadHistory();
+
+                document.getElementById("result")
+                    .style.display = "none";
+
+            } catch (error) {
+
+                console.log(error);
+
+            }
+        }
+
+
+        function escapeHtml(text) {
+
+            const div =
+                document.createElement("div");
+
+            div.textContent = text;
+
+            return div.innerHTML;
+        }
+
+
+        // Load dashboard data
+        loadStats();
+        loadHistory();
+
+    </script>
+
+</body>
+</html>
